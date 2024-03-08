@@ -9,6 +9,7 @@ hep.style.use("CMS")
 
 
 def make_plot(sample):
+    sample, title, var = sample
     fig = plt.figure(num=1, clear=True)
     ax = fig.add_subplot()
 
@@ -25,7 +26,7 @@ def make_plot(sample):
     genmetphi = t['GenMET_phi'].array()
 
 
-    algos = ['MET', 'PuppiMET', 'DeepMETResolutionTune']
+    algos = [('MET', 'PF'), ('PuppiMET', 'PUPPI'), ('DeepMETResolutionTune', 'DeepMET')]
 
     # for algo in algos:
     #     met = t[algo+'_pt'].array()
@@ -46,40 +47,49 @@ def make_plot(sample):
     # Make a plot of the standard deviation of the MET resolution as a function of the LHE HT
     label = 'LHE HT'
 
-    if sample in ['SMS-T5qqqqHg', 'GJet']:
+    if var == 'photon':
         ht = ak.max(t['Photon_pt'].array(), axis=1)
         ht = ak.fill_none(ht, 0)
         label = 'Leading photon p$_T$'
-    elif sample in ['QCD']:
+    elif var == 'jet':
         ht = ak.max(t['Jet_pt'].array(), axis=1)
         ht = ak.fill_none(ht, 0)
         label = 'Leading jet p$_T$'
-    else:
+    else: # var == 'HT':
         ht = ak.sum(t['GenJet_pt'].array(), axis=1)
         label = 'H$_T$ (generator jets)'
-    # ht_bins = np.linspace(0, 3000, 15)
-    # ht_bins = np.histogram_bin_edges(ht, bins=15)
-
+    
     ht_bins = stats.mstats.mquantiles(ht, np.linspace(0, 1, 15))
     ht_bins = ht_bins[:-1]
     ht_centers = (ht_bins[1:] + ht_bins[:-1]) / 2
 
-    for algo in algos:
+    for algo, algo_title in algos:
         met = t[algo+'_pt'].array()
         res = (met - genmet)
 
         std = np.zeros(len(ht_centers))
         for i in range(len(ht_centers)):
             std[i] = np.std(res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])])
-        plt.errorbar(ht_centers, std, xerr=(ht_bins[1:] - ht_bins[:-1]) / 2, fmt='o', label=algo)
+        plt.errorbar(ht_centers, std, xerr=(ht_bins[1:] - ht_bins[:-1]) / 2, fmt='o', label=algo_title)
     plt.xlabel(f'{label} [GeV]')
     plt.ylabel('p$_T^{miss}$ resolution [GeV]')
-    plt.legend()
+    plt.legend(title=title, alignment='left')
     fig.savefig(f"{sample}.pdf", format="pdf")
     fig.savefig(f"{sample}.png", format="png")
     # plt.show()
 
-samples = ['GJet', 'HINV', 'TTTT', 'QCD', 'SMS-T5qqqqHg', 'SMS-T2tt-4bd', 'SMS-TChiZZ']
+samples = [
+    ('GJet', '$Gamma$+jet', 'photon'),
+    ('HINV', r'H$\rightarrow$invisible', 'HT'),
+    ('TTTT', 'tttt', 'HT'),
+    ('QCD', 'QCD', 'jet'),
+    ('SMS-T5qqqqHg', 'SMS T5qqqqHG', 'photon'),
+    ('SMS-T2tt-4bd', 'SMS T2tt-4bd', 'HT'),
+    ('SMS-TChiZZ', 'SMS TChiZZ', 'HT'),
+    ('HHBBTT', r'HH$\rightarrow$bb$\tau\tau$', 'HT'),
+    ('TTHmumu', r'ttH (H$\rightarrow\mu\mu$)', 'HT'),
+    ('TTHbbdilep', r'ttH (H$\rightarrow$bb) dilepton', 'HT')
+]
 if __name__ == "__main__":
     for sample in samples:
         make_plot(sample)
