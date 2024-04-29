@@ -51,6 +51,18 @@ def make_plot(sample):
         ht = ak.max(t['Photon_pt'].array(), axis=1)
         ht = ak.fill_none(ht, 0)
         label = 'Leading photon p$_T$'
+    elif var == 'tau':
+        ht = ak.max(t['Tau_pt'].array(), axis=1)
+        ht = ak.fill_none(ht, 0)
+        label = 'Leading tau p$_T$'
+    elif var == 'muon':
+        ht = ak.max(t['Muon_pt'].array(), axis=1)
+        ht = ak.fill_none(ht, 0)
+        label = 'Leading muon p$_T$'
+    elif var == 'electron':
+        ht = ak.max(t['Electron_pt'].array(), axis=1)
+        ht = ak.fill_none(ht, 0)
+        label = 'Leading electron p$_T$'
     elif var == 'jet':
         ht = ak.max(t['Jet_pt'].array(), axis=1)
         ht = ak.fill_none(ht, 0)
@@ -79,6 +91,10 @@ def make_plot(sample):
     # plt.show()
 
 samples = [
+    ('ZMumu_M2300', r'Z$\rightarrow\mu\mu$ (M > 2300 GeV)', 'muon'),
+    ('TTdilepton', 'tt dilepton', 'HT'),
+    ('GToHH2B2Tau3000', 'GToHH2B2Tau3000', 'electron'),
+    ('BBAToZhToLLTauTau', 'BBAToZhToLLTauTau', 'tau'),
     ('GJet', '$Gamma$+jet', 'photon'),
     ('HINV', r'H$\rightarrow$invisible', 'HT'),
     ('TTTT', 'tttt', 'HT'),
