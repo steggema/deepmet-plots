@@ -8,7 +8,7 @@ import mplhep as hep
 hep.style.use("CMS")
 
 
-def make_plot(sample):
+def make_plot(sample, alg='std', tag=''):
     sample, title, var = sample
     fig = plt.figure(num=1, clear=True)
     ax = fig.add_subplot()
@@ -80,14 +80,26 @@ def make_plot(sample):
         res = (met - genmet)
 
         std = np.zeros(len(ht_centers))
+
         for i in range(len(ht_centers)):
-            std[i] = np.std(res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])])
+            if alg == 'std':
+                std[i] = np.std(res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])])
+            elif alg == 'central68':
+                subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
+                if len(subres) == 0: continue
+                std[i] = (np.percentile(subres, 84) - np.percentile(subres, 16))/2.
+            elif alg == 'central95':
+                subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
+                if len(subres) == 0: continue
+                std[i] = (np.percentile(subres, 97.5) - np.percentile(subres, 2.5))/2.
+            else:
+                print(f'Warning, no known algo {algo}')
         plt.errorbar(ht_centers, std, xerr=(ht_bins[1:] - ht_bins[:-1]) / 2, fmt='o', label=algo_title)
     plt.xlabel(f'{label} [GeV]')
     plt.ylabel('p$_T^{miss}$ resolution [GeV]')
     plt.legend(title=title, alignment='left')
-    fig.savefig(f"{sample}.pdf", format="pdf")
-    fig.savefig(f"{sample}.png", format="png")
+    fig.savefig(f"{sample}{tag}.pdf", format="pdf")
+    fig.savefig(f"{sample}{tag}.png", format="png")
     # plt.show()
 
 samples = [
@@ -109,4 +121,6 @@ samples = [
 if __name__ == "__main__":
     for sample in samples:
         make_plot(sample)
+        make_plot(sample, 'central68', '_central68')
+        make_plot(sample, 'central95', '_central95')
 
