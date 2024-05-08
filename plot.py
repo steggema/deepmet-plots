@@ -8,7 +8,7 @@ import mplhep as hep
 hep.style.use("CMS")
 
 
-def make_plot(sample, alg='std', tag=''):
+def make_plot(sample, error_alg='std', tag=''):
     sample, title, var = sample
     fig = plt.figure(num=1, clear=True)
     ax = fig.add_subplot()
@@ -26,7 +26,7 @@ def make_plot(sample, alg='std', tag=''):
     genmetphi = t['GenMET_phi'].array()
 
 
-    algos = [('MET', 'PF'), ('PuppiMET', 'PUPPI'), ('DeepMETResolutionTune', 'DeepMET')]
+    algos = [('MET', 'PF'), ('PuppiMET', 'PUPPI'), ('DeepMETResolutionTune', 'DeepMET')] #, ('DeepMETResolutionTuneDiv2', 'DeepMET/2')]
 
     # for algo in algos:
     #     met = t[algo+'_pt'].array()
@@ -76,24 +76,36 @@ def make_plot(sample, alg='std', tag=''):
     ht_centers = (ht_bins[1:] + ht_bins[:-1]) / 2
 
     for algo, algo_title in algos:
-        met = t[algo+'_pt'].array()
+        if algo == 'DeepMETResolutionTuneDiv2':
+            algo = 'DeepMETResolutionTune'
+            met = t[algo+'_pt'].array() / 2
+        else:
+            met = t[algo+'_pt'].array()
         res = (met - genmet)
 
         std = np.zeros(len(ht_centers))
 
         for i in range(len(ht_centers)):
-            if alg == 'std':
+            if error_alg == 'std':
                 std[i] = np.std(res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])])
-            elif alg == 'central68':
+            elif error_alg == 'central68':
                 subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
                 if len(subres) == 0: continue
                 std[i] = (np.percentile(subres, 84) - np.percentile(subres, 16))/2.
-            elif alg == 'central95':
+            elif error_alg == 'central95':
                 subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
                 if len(subres) == 0: continue
                 std[i] = (np.percentile(subres, 97.5) - np.percentile(subres, 2.5))/2.
+            elif error_alg == 'central99':
+                subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
+                if len(subres) == 0: continue
+                std[i] = (np.percentile(subres, 99.5) - np.percentile(subres, 0.5))/2.
+            elif error_alg == 'sqrt_mse':
+                subres = res[(ht > ht_bins[i]) & (ht < ht_bins[i+1])]
+                if len(subres) == 0: continue
+                std[i] = np.mean(subres**2)**0.5
             else:
-                print(f'Warning, no known algo {algo}')
+                print(f'Warning, no known error algo {error_alg}')
         plt.errorbar(ht_centers, std, xerr=(ht_bins[1:] - ht_bins[:-1]) / 2, fmt='o', label=algo_title)
     plt.xlabel(f'{label} [GeV]')
     plt.ylabel('p$_T^{miss}$ resolution [GeV]')
@@ -123,4 +135,7 @@ if __name__ == "__main__":
         make_plot(sample)
         make_plot(sample, 'central68', '_central68')
         make_plot(sample, 'central95', '_central95')
+        make_plot(sample, 'central99', '_central99')
+        make_plot(sample, 'sqrt_mse', '_mse')
+        
 
