@@ -7,13 +7,17 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import mplhep as hep
 
-from samples import samples_d
+from samples import Sample, samples_d
 from vars import var_d
 
 hep.style.use("CMS")
 
 
 def make_plot(sample, error_alg='std', var='HT', f_dir='/Users/jan/cernbox/'):
+    if sample not in samples_d:
+        print(f'Warning, sample {sample} not in sample metadata, will use defaults')
+        samples_d[sample] = Sample(sample)
+
     title = samples_d[sample].title
     year = samples_d[sample].year
 
